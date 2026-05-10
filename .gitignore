@@ -1,0 +1,42 @@
+# LaTeX auxiliary files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+*.run.xml
+*.bcf
+*-blx.bib
+
+# Compiled output
+*.pdf
+!output/paper.pdf
+*.dvi
+*.ps
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# R artifacts
+.Rhistory
+.RData
+.Rproj.user/
+*_cache/
+*_files/

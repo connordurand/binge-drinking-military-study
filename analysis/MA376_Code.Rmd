@@ -1,0 +1,79 @@
+---
+title: "Stats Project"
+author: "CDT Durand"
+date: "2025-02-18"
+output: pdf
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, echo=TRUE, warning=FALSE)
+```
+
+```{r}
+# Load necessary libraries
+library(tidyverse)
+library(haven)  # For reading .xpt files
+library(dplyr)
+```` 
+
+
+```{r}
+# Import NHANES datasets 
+dmq <- read_xpt("DEMO_L.xpt")  # Demographics
+alq <- read_xpt("ALQ_L.xpt")  # Alcohol Use
+paq <- read_xpt("PAQ_L.xpt")  # Physical Activity
+```
+```{r}
+# Select relevant columns from the datasets
+dmq_selected <- dmq %>%
+  select(SEQN, DMQMILIZ, DMDEDUC2,RIDAGEYR,INDFMPIR  )  # Military service status, Education level,  Age information, and Ratio of family income to poverty
+alq_selected <- alq %>%
+  select(SEQN, ALQ270)    # Binge drinking frequency
+
+paq_selected <- paq %>%
+  select(SEQN, PAD790Q)  # Moderate physical activity frequency
+```
+
+```{r}
+nhanes_combined <- dmq_selected %>%
+  left_join(alq_selected, by = "SEQN") %>%
+  left_join(demo_selected, by = "SEQN") %>%
+  left_join(paq_selected, by = "SEQN") %>%
+  mutate(
+    # Create military service status variable
+    served_military = case_when(
+      DMQMILIZ == 1 ~ "Yes",   # Served in the military
+      DMQMILIZ == 2 ~ "No",    # Did not serve
+      DMQMILIZ %in% c(7, 9) | is.na(DMQMILIZ) ~ "N/A"  # Refused, Don't know, or Missing
+    ),
+    # Create education level variable
+    education_level = case_when(
+      DMDEDUC2 == 1 ~ "Less than 9th grade",
+      DMDEDUC2 == 2 ~ "9-11th grade (Includes 12th grade with no diploma)",
+      DMDEDUC2 == 3 ~ "High school graduate/GED or equivalent",
+      DMDEDUC2 == 4 ~ "Some college or AA degree",
+      DMDEDUC2 == 5 ~ "College graduate or above",
+      DMDEDUC2 %in% c(7, 9) | is.na(DMDEDUC2) ~ "N/A"  # Refused, Don't know, or Missing
+    ),
+    # Create moderate physical activity variable
+    moderate_ltp_activity = case_when(
+      PAD790Q >= 0 & PAD790Q <= 180 ~ as.character(PAD790Q),  # Range of valid values
+      TRUE ~ NA_character_  # Exclude any other values (Refused, Don't know, Missing, etc.)
+    ))
+    
+
+```
+
+```{r}
+# Keep original binge drinking values as they are and remove rows with NA values
+nhanes_combined_clean <- nhanes_combined %>%
+  drop_na()  # Remove rows with NA values in any column
+````
+
+```{r}
+# Save combined dataset to CSV
+write.csv(nhanes_combined_clean, "NHANES_Military_Alcohol.csv", row.names = FALSE)
+```` 
+

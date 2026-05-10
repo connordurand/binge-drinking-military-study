@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Binge Drinking and Military Service: A Logistic Regression Analysis</title>
+  <meta name="description" content="Logistic regression analysis of the association between U.S. military service and binge drinking using 2021–2023 NHANES data. n=1,477. Connor Durand, West Point.">
+  <meta name="author" content="Connor Durand">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: #1a1a1a;
+      background: #fff;
+      padding: 0 1.5rem;
+    }
+
+    .page {
+      max-width: 740px;
+      margin: 0 auto;
+    }
+
+    nav {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.82rem;
+      color: #999;
+      padding: 1.5rem 0 1.25rem;
+      border-bottom: 1px solid #e8e8e8;
+      margin-bottom: 3.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav a { color: #555; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    nav .sep { color: #bbb; margin: 0 0.4rem; }
+
+    .header { margin-bottom: 2.5rem; }
+
+    .header h1 {
+      font-size: 1.85rem;
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      margin-bottom: 1rem;
+    }
+
+    .byline {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.88rem;
+      color: #555;
+      line-height: 1.65;
+    }
+
+    .abstract {
+      border-left: 3px solid #d8d8d8;
+      padding-left: 1.25rem;
+      color: #333;
+      font-size: 1rem;
+      margin-bottom: 3rem;
+    }
+
+    .abstract .label {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.73rem;
+      font-weight: 500;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: #aaa;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    section { margin-bottom: 2.5rem; }
+
+    h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      margin-top: 2.75rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    p { margin-bottom: 1rem; }
+    p:last-child { margin-bottom: 0; }
+
+    a {
+      color: #1a1a1a;
+      text-decoration: underline;
+      text-decoration-color: #ccc;
+      text-underline-offset: 2px;
+    }
+    a:hover { text-decoration-color: #1a1a1a; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border: 1px solid #e8e8e8;
+      border-radius: 4px;
+      margin: 1.75rem 0;
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow: hidden;
+    }
+
+    .stat {
+      padding: 1.1rem 1.15rem;
+      border-right: 1px solid #e8e8e8;
+    }
+    .stat:last-child { border-right: none; }
+
+    .stat-val {
+      font-size: 1.25rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    .stat-lbl {
+      font-size: 0.73rem;
+      color: #888;
+      line-height: 1.45;
+    }
+
+    figure { margin: 2rem 0; }
+
+    figure img {
+      width: 100%;
+      border: 1px solid #e0e0e0;
+      border-radius: 3px;
+      display: block;
+    }
+
+    figcaption {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.81rem;
+      color: #666;
+      margin-top: 0.65rem;
+      line-height: 1.55;
+    }
+
+    figcaption strong { color: #444; }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.87rem;
+      margin: 1.5rem 0;
+    }
+
+    .results-table th {
+      text-align: left;
+      font-weight: 500;
+      font-size: 0.76rem;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.45rem 0.75rem;
+      border-bottom: 2px solid #1a1a1a;
+    }
+
+    .results-table td {
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .results-table tr.highlight td {
+      background: #f8f8f8;
+      font-weight: 500;
+    }
+
+    .results-table tr:last-child td { border-bottom: none; }
+    .results-table td:not(:first-child) { font-variant-numeric: tabular-nums; }
+
+    .callout {
+      background: #f8f8f8;
+      border-left: 3px solid #aaa;
+      padding: 1rem 1.25rem;
+      font-size: 0.97rem;
+      color: #333;
+      margin: 1.5rem 0;
+      font-style: italic;
+    }
+
+    .citation {
+      background: #f8f8f8;
+      border: 1px solid #e8e8e8;
+      border-radius: 4px;
+      padding: 1.2rem 1.5rem;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.86rem;
+      color: #555;
+      margin: 1.5rem 0;
+      line-height: 1.65;
+    }
+
+    .citation .paper-title {
+      font-weight: 500;
+      color: #1a1a1a;
+      margin-bottom: 0.35rem;
+    }
+
+    .links {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.87rem;
+      margin: 1.25rem 0;
+    }
+
+    .links a {
+      color: #1a1a1a;
+      text-decoration: none;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 1px;
+    }
+    .links a:hover { border-color: #1a1a1a; }
+
+    ol.findings {
+      margin: 1.25rem 0 1.5rem 1.5rem;
+      line-height: 1.75;
+    }
+
+    ol.findings li {
+      margin-bottom: 0.6rem;
+    }
+
+    footer {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.79rem;
+      color: #aaa;
+      border-top: 1px solid #e8e8e8;
+      padding: 2rem 0 3rem;
+      margin-top: 4rem;
+      line-height: 1.65;
+    }
+
+    @media (max-width: 560px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+      .stat:nth-child(2) { border-right: none; }
+      .stat:nth-child(1),
+      .stat:nth-child(2) { border-bottom: 1px solid #e8e8e8; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <nav>
+    <div>
+      <a href="https://github.com/connordurand">connordurand</a>
+      <span class="sep">/</span>
+      binge-drinking-military-study
+    </div>
+    <a href="https://github.com/connordurand/binge-drinking-military-study">GitHub</a>
+  </nav>
+
+  <div class="header">
+    <h1>Does Military Service Predict Binge Drinking?</h1>
+    <div class="byline">
+      Connor Durand<br>
+      Department of Mathematical Sciences, United States Military Academy, West Point, NY
+    </div>
+  </div>
+
+  <div class="abstract">
+    <span class="label">Abstract</span>
+    It is a general stereotype that those who are serving or have served in the military are prone
+    to alcohol-related issues. This study builds on existing literature to test the association
+    between military service and binge drinking using logistic regression on 2021–2023 NHANES data
+    (n&nbsp;=&nbsp;1,477). We found no statistically significant association at the 0.05 level,
+    though military service approached significance at the 0.1 level (OR = 0.639, p = 0.062),
+    and in the opposite direction from the hypothesis. Income and education were the stronger
+    predictors. The model failed to outperform a naive classifier, and several validity conditions
+    were not met.
+  </div>
+
+  <section>
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-val">1,477</span>
+        <span class="stat-lbl">Adults aged 21–80 in the analysis</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">OR = 0.64</span>
+        <span class="stat-lbl">Odds ratio for military service on binge drinking (95% CI: 0.39&ndash;1.01)</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">p &lt; 0.1</span>
+        <span class="stat-lbl">Military service significance (not significant at 0.05)</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">65.8%</span>
+        <span class="stat-lbl">Model accuracy (vs. 69.2% baseline; did not outperform naive classifier)</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Background</h2>
+    <p>
+      Military service members are commonly perceived to have higher rates of hazardous alcohol use
+      than civilians. Prior work by Meadows et al. used logistic regression to examine binge drinking
+      among service members based on perceived alcohol culture, finding that education was a
+      significant control variable. Separately, Dunn et al. found that more active college students
+      were more likely to binge drink, raising the question of whether the high physical activity
+      associated with military life might explain elevated binge drinking rates.
+    </p>
+    <p>
+      This study combines those threads: controlling for income, physical activity, and education,
+      does military service independently predict binge drinking? Based on anecdotal experience and
+      societal stereotypes, we hypothesized a positive association.
+    </p>
+  </section>
+
+  <section>
+    <h2>Data</h2>
+    <p>
+      Data came from the August 2021–August 2023 National Health and Nutrition Examination Survey
+      (NHANES), a multi-year, stratified, clustered four-stage sample representing the
+      noninstitutionalized civilian U.S. population. The final analytic sample was restricted to
+      adults aged 21 to 80, yielding <strong>n&nbsp;=&nbsp;1,477</strong>.
+    </p>
+    <p>
+      <strong>Binge drinking</strong> (the response variable) was binary: respondents who reported
+      consuming more than 4/5 drinks in a 2-hour period at least 3–6 times in the past year were
+      coded as binge drinkers. <strong>Military service</strong> was also binary, based on self-reported
+      active-duty service in the U.S. Armed Forces, Reserves, or National Guard.
+    </p>
+    <p>
+      Control variables required some transformation. Income was expressed as a ratio of family
+      income to the poverty line (0–5). Physical activity was derived from two-part frequency
+      questions and collapsed into a three-level categorical variable (low/medium/high) after
+      removing unfeasible extreme responses. Education was dichotomized into less than, or at least,
+      a high school diploma.
+    </p>
+
+    <figure>
+      <img src="assets/image1.png" alt="Table 1: Study variables and descriptions">
+      <figcaption>
+        <strong>Table 1.</strong> Study variables and descriptions, including source questions,
+        coding, and transformations applied.
+      </figcaption>
+    </figure>
+
+    <figure>
+      <img src="assets/image2.png" alt="Table 2: Summary of subject characteristics by binge drinking status">
+      <figcaption>
+        <strong>Table 2.</strong> Summary of subject characteristics by binge drinking status.
+        Income was significantly different between groups at the 5% level (p&nbsp;&lt;&nbsp;0.05),
+        supporting its inclusion as a control.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Methods</h2>
+    <p>
+      We fit two logistic regression models predicting the log-odds of binge drinking. The
+      <strong>general model</strong> included military service, income, physical activity level,
+      and education as predictors:
+    </p>
+    <p style="font-family:'Inter',sans-serif; font-size:0.9rem; background:#f8f8f8; padding:0.9rem 1.1rem; border-radius:3px; line-height:1.7;">
+      logit(π) = β₀ + β₁·Military + β₂·Income + β₃·ActivityLevel + β₄·Education
+    </p>
+    <p>
+      An <strong>interaction model</strong> added a military × physical-activity interaction term,
+      motivated by an interaction plot (Figure 1) showing non-parallel slopes across activity
+      levels for military vs. non-military respondents. The two models were compared using a
+      nested ANOVA likelihood-ratio test.
+    </p>
+    <p>
+      We evaluated validity conditions (linearity, independence, normality, equal variance) via a
+      Normal Q-Q plot, histogram of residuals, and residuals vs. predicted values plot. We then
+      classified predictions using a 0.35 cutoff, chosen because 30.8% of the sample were binge
+      drinkers, making 0.5 too conservative.
+    </p>
+
+    <figure>
+      <img src="assets/image4.png" alt="Interaction plot: Military service and physical activity on binge drinking">
+      <figcaption>
+        <strong>Figure 1.</strong> Interaction plot showing proportion of binge drinkers across
+        physical activity levels, stratified by military service. Non-parallel slopes suggested a
+        potential interaction, which was tested in the model comparison.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Results</h2>
+
+    <p>
+      The nested ANOVA comparison returned a chi-squared p-value of <strong>0.294</strong>,
+      providing no evidence that the interaction model improved on the general model. All
+      interpretation focuses on the general model.
+    </p>
+
+    <p>
+      The fitted general model was:
+    </p>
+
+    <p style="font-family:'Inter',sans-serif; font-size:0.9rem; background:#f8f8f8; padding:0.9rem 1.1rem; border-radius:3px; line-height:1.7;">
+      logit(π̂) = −1.267 + 0.639·Military − 0.163·Income + 0.134·ActivityMed − 0.045·ActivityLow + 0.540·AboveHS
+    </p>
+
+    <p>
+      Odds ratios and 95% confidence intervals for each predictor:
+    </p>
+
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Predictor</th>
+          <th>Odds Ratio</th>
+          <th>95% CI</th>
+          <th>p-value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Military service</td>
+          <td>0.639</td>
+          <td>(0.392, 1.007)</td>
+          <td>0.062</td>
+        </tr>
+        <tr>
+          <td>Income (per unit)</td>
+          <td>0.850</td>
+          <td>—</td>
+          <td>&lt; 0.001</td>
+        </tr>
+        <tr>
+          <td>Activity: moderate vs. high</td>
+          <td>1.872</td>
+          <td>(0.912, 4.102)</td>
+          <td>0.099</td>
+        </tr>
+        <tr>
+          <td>Activity: low vs. high</td>
+          <td>1.375</td>
+          <td>(0.694, 2.930)</td>
+          <td>0.381</td>
+        </tr>
+        <tr class="highlight">
+          <td>Above HS education</td>
+          <td>0.583</td>
+          <td>(0.449, 0.759)</td>
+          <td>&lt; 0.001</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <figure>
+      <img src="assets/image8.png" alt="Table 3: Odds ratios and 95% confidence intervals">
+      <figcaption>
+        <strong>Table 3.</strong> Odds ratios and 95% confidence intervals for general model
+        coefficients. Military service (OR = 0.639) approached but did not reach the 0.05
+        threshold; income and above-HS education were significant at p &lt; 0.001.
+      </figcaption>
+    </figure>
+
+    <p>
+      Validity conditions were not met. The Normal Q-Q plot showed residual curvature (failing
+      linearity), and the histogram of residuals was right-skewed (failing normality). These
+      violations mean the regression results should be interpreted with caution.
+    </p>
+
+    <figure>
+      <img src="assets/image9.png" alt="Normal Q-Q Plot of residuals">
+      <figcaption>
+        <strong>Figure 2.</strong> Normal Q-Q plot of residuals. Curvature indicates that the
+        linearity validity condition is not satisfied.
+      </figcaption>
+    </figure>
+
+    <figure>
+      <img src="assets/image10.png" alt="Histogram of residuals">
+      <figcaption>
+        <strong>Figure 3.</strong> Histogram of residuals showing right skew, violating the
+        normality condition.
+      </figcaption>
+    </figure>
+
+    <p>
+      At a 0.35 cutoff, the model achieved <strong>65.81% accuracy</strong>. A naive classifier
+      that always predicts "non-binge drinker" achieves <strong>69.19%</strong>. A McNemar test
+      comparing the two returned p&nbsp;=&nbsp;0.998; the model did not perform significantly
+      better than the baseline.
+    </p>
+
+    <figure>
+      <img src="assets/image12.png" alt="Predicted probability vs. actual status">
+      <figcaption>
+        <strong>Figure 4.</strong> Predicted probability vs. actual binge drinking status using
+        a 0.35 cutoff. The model predicts non-binge drinkers more reliably than binge drinkers.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Discussion</h2>
+
+    <p>
+      The results pointed in the opposite direction from the hypothesis. Military service was
+      associated with lower odds of binge drinking (OR = 0.639, p = 0.062), approaching but not
+      reaching the 0.05 threshold. Income and education emerged as the more robust and highly
+      significant predictors.
+    </p>
+
+    <div class="callout">
+      The stereotype that military members drink more than civilians was not supported. If anything,
+      the data suggest the opposite: after controlling for income, education, and activity level,
+      military service was associated with lower odds of binge drinking.
+    </div>
+
+    <p>
+      The study faced several limitations. The physical activity measure required collapsing a
+      two-part quantitative question into a three-level categorical variable, losing precision.
+      The 2021–2023 NHANES collection period was affected by COVID-19, which may have compressed
+      participation and changed behavior. The model failed both key validity conditions and could
+      not outperform a trivial classifier.
+    </p>
+
+    <p>
+      Future work should use a continuous physical activity metric, draw on a broader NHANES
+      time window, and consider more granular controls for alcohol culture and occupational context.
+      If the negative association holds in larger, better-controlled studies, it could have
+      implications for how alcohol policy is targeted across populations.
+    </p>
+  </section>
+
+  <section>
+    <h2>Repository</h2>
+
+    <div class="citation">
+      <div class="paper-title">Investigating Binge Drinking and Military Service</div>
+      Durand, C. Technical report for MA376 Applied Statistics, United States Military Academy,
+      West Point, NY (2024). Data: NHANES 2021–2023 (n&nbsp;=&nbsp;1,477). Analysis in R.
+    </div>
+
+    <div class="links">
+      <a href="https://github.com/connordurand/binge-drinking-military-study">Source code &amp; data</a>
+    </div>
+  </section>
+
+  <footer>
+    Connor Durand, United States Military Academy, West Point, NY.<br>
+    Views expressed are the author's own and do not represent the Department of Mathematical
+    Sciences, the United States Military Academy, the United States Army, or the Department of Defense.
+  </footer>
+
+</div>
+</body>
+</html>
